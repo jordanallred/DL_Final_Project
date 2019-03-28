@@ -22,51 +22,6 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
     # model.add(Dropout(dropout))
 
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
-    model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
-
     model.add(LSTM(units=units))
     # model.add(Dropout(dropout))
 
