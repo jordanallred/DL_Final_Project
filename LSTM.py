@@ -17,13 +17,13 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     # tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
 
     model.add(LSTM(units=units, return_sequences=True, input_shape=(train_features.shape[1], train_features.shape[2])))
-    # model.add(Dropout(dropout))
+    model.add(Dropout(dropout))
 
     model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
-    # model.add(Dropout(dropout))
+    model.add(Dropout(dropout))
 
     model.add(LSTM(units=units))
-    # model.add(Dropout(dropout))
+    model.add(Dropout(dropout))
 
     model.add(Dense(1, batch_size=batch_size))
 
