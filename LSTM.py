@@ -14,7 +14,7 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     dropout = 0.10
 
     model = Sequential()
-    tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
+    # tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
 
     model.add(LSTM(units=units, return_sequences=True, input_shape=(train_features.shape[1], train_features.shape[2])))
     # model.add(Dropout(dropout))
@@ -76,7 +76,7 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
 
     # Fitting the RNN to the Training set
-    model.fit(train_features, train_labels, epochs=epochs, batch_size=batch_size, callbacks=[tbCallBack], verbose=1)
+    model.fit(train_features, train_labels, epochs=epochs, batch_size=batch_size, verbose=1)
 
     predictions = model.predict(test_features, batch_size=batch_size)
 
