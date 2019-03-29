@@ -126,42 +126,80 @@ def prediction_aggregation(predictions: list):
     return votes
 
 
-features, labels = CNN_data_prep('amazon')
-features = reshape(features, (shape(features)[0] * shape(features)[1], 8))
-labels = reshape(labels, (shape(labels)[0] * shape(labels)[1], 1))
-X_train, X_test, y_train, y_test = train_test_split(features, labels, train_size=0.01)
-print("Training Instances: " + str(len(X_train)))
-print("Testing Instances: " + str(len(X_test)))
-print()
-scaling = MinMaxScaler(feature_range=(-1, 1)).fit(X_train)
-X_train = scaling.transform(X_train)
-X_test = scaling.transform(X_test)
+def get_features(company: str, train_size=0.80):
+    features, labels = CNN_data_prep(company)
+    prices = []
+    times = []
+    for feature in features:
+        for minute in feature:
+            times.append(minute[0])
+            prices.append(minute[1])
+    features = reshape(features, (shape(features)[0] * shape(features)[1], 8))
+    labels = reshape(labels, (shape(labels)[0] * shape(labels)[1], 1))
+    X_train = features[:round(len(features) * train_size)]
+    X_test = features[round(len(features) * train_size):]
+    y_train = labels[:round(len(labels) * train_size)]
+    y_test = labels[round(len(labels) * train_size):]
+    prices = prices[round(len(prices) * train_size):]
+    times = times[round(len(times) * train_size):]
+    scaling = MinMaxScaler(feature_range=(-1, 1)).fit(X_train)
+    X_train = scaling.transform(X_train)
+    X_test = scaling.transform(X_test)
+    return X_train, X_test, y_train, y_test, prices, times
 
-true_labels, KNN_predictions = KNN.predict(X_train, y_train, X_test, y_test)
-accuracy = accuracy_score(true_labels, KNN_predictions)
-print("KNN Accuracy: " + str(accuracy * 100) + "%")
-prediction_distribution(KNN_predictions, true_labels)
 
-true_labels, SVM_predictions = SVM.predict(X_train, y_train, X_test, y_test)
-accuracy = accuracy_score(true_labels, SVM_predictions)
-print("SVM Accuracy: " + str(accuracy * 100) + "%")
-prediction_distribution(SVM_predictions, true_labels)
+def knn_predict(company: str, verbose=False):
+    X_train, X_test, y_train, y_test, prices, times = get_features(company, 0.01)
+    true_labels, KNN_predictions = KNN.predict(X_train, y_train, X_test, y_test)
+    accuracy = accuracy_score(true_labels, KNN_predictions)
+    if verbose:
+        print("KNN Accuracy: " + str(accuracy * 100) + "%")
+        prediction_distribution(KNN_predictions, true_labels)
+    return prices, times, KNN_predictions
 
-true_labels, RF_predictions = RF.predict(X_train, y_train, X_test, y_test)
-accuracy = accuracy_score(true_labels, RF_predictions)
-print("Random Forest Accuracy: " + str(accuracy * 100) + "%")
-prediction_distribution(RF_predictions, true_labels)
 
-X_train, y_train, X_test, y_test = LSTM_data_prep(X_train, y_train, X_test, y_test)
-LSTM_predictions, true_labels = LSTM.predict(X_train, y_train, X_test, y_test)
-accuracy = accuracy_score(true_labels, LSTM_predictions)
-print("LSTM Accuracy: " + str(accuracy * 100) + "%")
-prediction_distribution(LSTM_predictions, true_labels)
+def svm_predict(company: str, verbose=False):
+    X_train, X_test, y_train, y_test, prices, times = get_features(company, 0.01)
+    true_labels, SVM_predictions = SVM.predict(X_train, y_train, X_test, y_test)
+    accuracy = accuracy_score(true_labels, SVM_predictions)
+    if verbose:
+        print("SVM Accuracy: " + str(accuracy * 100) + "%")
+        prediction_distribution(SVM_predictions, true_labels)
+    return prices, times, SVM_predictions
 
-y_train, y_test = reshape(array(y_train), (shape(y_train)[0], 1, 1)), reshape(array(y_test), (shape(y_test)[0], 1, 1))
-true_labels, CNN_predictions = CNN.predict(X_train, y_train, X_test, y_test)
-true_labels = reshape(true_labels, (shape(true_labels)[0], ))
-CNN_predictions = reshape(CNN_predictions, (shape(CNN_predictions)[0], ))
-accuracy = accuracy_score(true_labels, CNN_predictions)
-print("CNN Accuracy: " + str(accuracy * 100) + "%")
-prediction_distribution(CNN_predictions, true_labels)
+
+def rf_predict(company: str, verbose=False):
+    X_train, X_test, y_train, y_test, prices, times = get_features(company, 0.01)
+    true_labels, RF_predictions = RF.predict(X_train, y_train, X_test, y_test)
+    accuracy = accuracy_score(true_labels, RF_predictions)
+    if verbose:
+        print("Random Forest Accuracy: " + str(accuracy * 100) + "%")
+        prediction_distribution(RF_predictions, true_labels)
+    return prices, times, RF_predictions
+
+
+def lstm_predict(company:str, verbose=False):
+    X_train, X_test, y_train, y_test, prices, times = get_features(company)
+    X_train, y_train, X_test, y_test = LSTM_data_prep(X_train, y_train, X_test, y_test)
+    LSTM_predictions, true_labels = LSTM.predict(X_train, y_train, X_test, y_test)
+    accuracy = accuracy_score(true_labels, LSTM_predictions)
+    if verbose:
+        print("LSTM Accuracy: " + str(accuracy * 100) + "%")
+        prediction_distribution(LSTM_predictions, true_labels)
+    return prices, times, LSTM_predictions
+
+
+def cnn_predict(company: str, verbose=False):
+    X_train, X_test, y_train, y_test, prices, times = get_features(company)
+    y_train, y_test = reshape(array(y_train), (shape(y_train)[0], 1, 1)), reshape(array(y_test), (shape(y_test)[0], 1, 1))
+    true_labels, CNN_predictions = CNN.predict(X_train, y_train, X_test, y_test)
+    true_labels = reshape(true_labels, (shape(true_labels)[0], ))
+    CNN_predictions = reshape(CNN_predictions, (shape(CNN_predictions)[0], ))
+    accuracy = accuracy_score(true_labels, CNN_predictions)
+    if verbose:
+        print("Training Instances: " + str(len(X_train)))
+        print("Testing Instances: " + str(len(X_test)))
+        print()
+        print("CNN Accuracy: " + str(accuracy * 100) + "%")
+        prediction_distribution(CNN_predictions, true_labels)
+    return prices, times, CNN_predictions

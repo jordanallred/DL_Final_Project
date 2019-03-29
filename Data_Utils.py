@@ -17,7 +17,7 @@ stocks_dict = {
     'amzn': 'amazon',
     'intc': 'intel',
     'msft': 'microsoft',
-    't': 'tesla'
+    't': 'att'
 }
 
 stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Augmented Dataset\\"
