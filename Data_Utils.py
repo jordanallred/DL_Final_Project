@@ -20,7 +20,7 @@ stocks_dict = {
     't': 'tesla'
 }
 
-stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Test Dataset\\"
+stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Augmented Dataset\\"
 
 
 def delete_experimental_files():

@@ -14,24 +14,16 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     dropout = 0.10
 
     model = Sequential()
-    # tbCallBack = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
 
     model.add(LSTM(units=units, return_sequences=True, input_shape=(train_features.shape[1], train_features.shape[2])))
     model.add(Dropout(dropout))
-
     model.add(LSTM(units=units, return_sequences=True, recurrent_dropout=True))
     model.add(Dropout(dropout))
-
     model.add(LSTM(units=units))
     model.add(Dropout(dropout))
-
     model.add(Dense(1, batch_size=batch_size))
-
-    # Compiling the RNN
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-
-    # Fitting the RNN to the Training set
-    model.fit(train_features, train_labels, epochs=epochs, batch_size=batch_size, verbose=1)
+    model.fit(train_features, train_labels, epochs=epochs, batch_size=batch_size, verbose=0)
 
     predictions = model.predict(test_features, batch_size=batch_size)
 
