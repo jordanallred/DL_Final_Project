@@ -13,7 +13,7 @@ stocks_dict = {
     'f': 'ford',
     'fb': 'facebook',
     'ge': 'general electric',
-    'goog': 'google',
+    # 'goog': 'google',
     'amzn': 'amazon',
     'intc': 'intel',
     'msft': 'microsoft',
@@ -21,7 +21,8 @@ stocks_dict = {
 }
 
 stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Augmented Dataset\\"
-
+live_data_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Live Data\\"
+# stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Live Data\\"
 
 def delete_experimental_files():
     day_directory = listdir(stocks_file)
@@ -98,7 +99,7 @@ def remove_column(name: str):
                 header_to_remove = -1
                 for line in csv_reader:
                     if str(line).__contains__('Date'):
-                        header_to_remove = line.index(name)
+                        header_to_remove = line.index(name, -1)
                     if header_to_remove < 0:
                         print('not a legal header name')
                         exit(-1)
@@ -309,8 +310,8 @@ def add_decisions():
                 else:
                     print('Problem with decisions. Check array.')
                     exit(-1)
-            # add_column('Decision', decisions, stocks_file + company + '\\' + day)
-            remove_column('Decision')
+            add_column('Decision', decisions, stocks_file + company + '\\' + day)
+            # remove_column('Decision')
             print(stocks_file + company + '\\' + day)
 
 
@@ -332,7 +333,31 @@ def get_dataset(company_name: str):
     return dataset
 
 
-def get_split_dataset(company_name: str):
+def get_test_dataset(company_name: str):
+    company_directory = live_data_file + company_name + "\\"
+    company_files = listdir(company_directory)
+    dataset = []
+    for file in company_files:
+        data = read_csv(company_directory + file)[1:]
+        for index in range(len(data)):
+            line = data[index]
+            if line[-1] == 'sell':
+                data[index][-1] = '-1'
+            elif line[-1] == 'hold':
+                data[index][-1] = '0'
+            elif line[-1] == 'buy':
+                data[index][-1] = '1'
+            dataset.append(line)
+    return dataset
+
+
+def get_split_dataset_all():
+    dataset = []
+    for company in listdir(stocks_file):
+        dataset.append(get_split_dataset_individual(company))
+
+
+def get_split_dataset_individual(company_name: str):
     dataset = get_dataset(company_name)
     features, labels = [], []
     for data in dataset:
@@ -341,11 +366,24 @@ def get_split_dataset(company_name: str):
     return features, labels
 
 
+def get_split_test_dataset_individual(company_name: str):
+    dataset = get_test_dataset(company_name)
+    features, labels = [], []
+    for data in dataset:
+        try:
+            features.append([float(number) for number in data[:-1]])
+        except:
+            print(data)
+        labels.append(int(data[-1]))
+    return features, labels
+
+
 def LSTM_data_prep(X_train, y_train, X_test, y_test):
     return reshape(array(X_train), (shape(X_train)[0], shape(X_train)[1], 1)), reshape(array(y_train), (shape(y_train)[0], 1)), reshape(array(X_test), (shape(X_test)[0], shape(X_test)[1], 1)), reshape(array(y_test), (shape(y_test)[0], 1))
 
+
 def CNN_data_prep(company_name: str):
-    features, labels = get_split_dataset(company_name)
+    features, labels = get_split_dataset_individual(company_name)
     CNN_features, CNN_labels = [], []
     feature_dataset, label_dataset = [], []
     day = 0
@@ -378,6 +416,35 @@ def CNN_data_prep(company_name: str):
 
     return array(CNN_features), array(CNN_labels)
 
+
+def CNN_test_data_prep(company_name: str):
+    features, labels = get_split_test_dataset_individual(company_name)
+    CNN_features, CNN_labels = [], []
+    feature_dataset, label_dataset = [], []
+    day = 0
+    day_index = 0
+    for index in range(len(features)):
+        feature = features[index]
+        if day == 0:
+            day = feature[0]
+        if feature[0] == day:
+            feature_dataset.append(feature[1:])
+            label_dataset.append([labels[index]])
+        if len(feature_dataset) == 390:
+            CNN_features.append(feature_dataset)
+            CNN_labels.append(label_dataset)
+            if index == len(features) - 1:
+                break
+            feature_dataset.clear()
+            label_dataset.clear()
+        if feature[0] != day:
+            feature_dataset.append(feature[1:])
+            label_dataset.append([labels[index]])
+            day = feature[0]
+
+    return CNN_features, CNN_labels
+
+
 def change_time_format():
     company_directory = listdir(stocks_file)
     for company in company_directory:
@@ -398,3 +465,13 @@ def change_time_format():
                 time += 1
             write_csv(stocks_file + company + "\\" + day, day_dataset)
     change_header_name('Time', 'Minutes Since Open')
+
+
+'''
+add_percent_change(1)
+add_percent_change(5)
+add_percent_change(15)
+add_percent_change(30)
+add_percent_change(60)
+add_decisions()
+'''

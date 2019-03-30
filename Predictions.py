@@ -1,10 +1,9 @@
-from Data_Utils import get_split_dataset, CNN_data_prep, LSTM_data_prep
+from Data_Utils import CNN_data_prep, LSTM_data_prep, CNN_test_data_prep
 import LSTM
 import RF
 import SVM
 import KNN
 import CNN
-from sklearn.model_selection import train_test_split
 from numpy import shape
 from numpy import reshape
 from numpy import array
@@ -128,20 +127,34 @@ def prediction_aggregation(predictions: list):
 
 def get_features(company: str, train_size=0.80):
     features, labels = CNN_data_prep(company)
+    '''
     prices = []
     times = []
     for feature in features:
         for minute in feature:
             times.append(minute[0])
             prices.append(minute[1])
+    '''
     features = reshape(features, (shape(features)[0] * shape(features)[1], 8))
     labels = reshape(labels, (shape(labels)[0] * shape(labels)[1], 1))
     X_train = features[:round(len(features) * train_size)]
-    X_test = features[round(len(features) * train_size):]
+    # X_test = features[round(len(features) * train_size):]
     y_train = labels[:round(len(labels) * train_size)]
-    y_test = labels[round(len(labels) * train_size):]
-    prices = prices[round(len(prices) * train_size):]
-    times = times[round(len(times) * train_size):]
+    # y_test = labels[round(len(labels) * train_size):]
+
+    X_test, y_test = CNN_test_data_prep(company)
+    prices = []
+    times = []
+
+    for day in X_test:
+        for minute in day:
+            times.append(minute[0])
+            prices.append(minute[1])
+    X_test = reshape(X_test, (shape(X_test)[0] * shape(X_test)[1], 8))
+    y_test = reshape(y_test, (shape(y_test)[0] * shape(y_test)[1], 1))
+
+    # prices = prices[round(len(prices) * train_size):]
+    # times = times[round(len(times) * train_size):]
     scaling = MinMaxScaler(feature_range=(-1, 1)).fit(X_train)
     X_train = scaling.transform(X_train)
     X_test = scaling.transform(X_test)
@@ -169,7 +182,7 @@ def svm_predict(company: str, verbose=False):
 
 
 def rf_predict(company: str, verbose=False):
-    X_train, X_test, y_train, y_test, prices, times = get_features(company, 0.01)
+    X_train, X_test, y_train, y_test, prices, times = get_features(company, 1.00)
     true_labels, RF_predictions = RF.predict(X_train, y_train, X_test, y_test)
     accuracy = accuracy_score(true_labels, RF_predictions)
     if verbose:
