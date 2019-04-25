@@ -16,7 +16,7 @@ def predict(train_features: ndarray, train_labels: ndarray, test_features: ndarr
     model.add(Dropout(0.2))
     model.add(Dense(1))
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
-    model.fit(train_features, train_labels, epochs=epochs, verbose=0)
+    model.fit(train_features, train_labels, epochs=epochs, verbose=1)
 
     predictions = model.predict(test_features)
 

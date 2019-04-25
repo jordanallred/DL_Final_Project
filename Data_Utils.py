@@ -1,6 +1,6 @@
 from os import listdir
 from os import remove
-from os.path import isdir
+from os.path import isdir, isfile
 from os import mkdir
 from shutil import copy
 from csv import reader
@@ -10,7 +10,7 @@ from numpy import arange, ceil, shape, array, reshape
 stocks_dict = {
     'aapl': 'apple',
     'bac': 'bank of america',
-    'f': 'ford',
+    # 'f': 'ford',
     'fb': 'facebook',
     'ge': 'general electric',
     # 'goog': 'google',
@@ -20,9 +20,9 @@ stocks_dict = {
     't': 'att'
 }
 
-stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Augmented Dataset\\"
-live_data_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Live Data\\"
-# stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Live Data\\"
+stocks_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Alternative Dataset\\"
+live_data_file = "C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Live Data - Volume\\"
+
 
 def delete_experimental_files():
     day_directory = listdir(stocks_file)
@@ -52,13 +52,16 @@ def write_stock_headers():
     for company in company_directory:
         day_directory = listdir(stocks_file + company)
         for day in day_directory:
-            temporary = 'C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\Experimental '
-            'Dataset\\amazon\\temporary.csv'
+            temporary = 'C:\\Users\\Jordan Allred\\Documents\\Deep Learning Final Project\\temporary.csv'
             with open(stocks_file + company + "\\" + day, 'r') as open_file:
                 csv_reader = reader(open_file)
                 with open(temporary, 'w+') as write_file:
-                    write_data = [['Date', 'Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Split', 'Earnings', 'Dividends']]
+                    # write_data = [['Date', 'Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Split', 'Earnings', 'Dividends']]
+                    write_data = [['Time', 'Date', 'Price', 'Volume']]
+
                     for line in csv_reader:
+                        if 'Time' in line:
+                            write_data = []
                         write_data.append(line)
             remove(stocks_file + company + "\\" + day)
             write_csv(stocks_file + company + "\\" + day, write_data)
@@ -93,13 +96,15 @@ def remove_column(name: str):
     for company in company_directory:
         day_directory = listdir(stocks_file + company)
         for day in day_directory:
+            print(company + "\\" + day)
             with open(stocks_file + company + "\\" + day, 'r') as open_file:
                 csv_reader = reader(open_file)
                 write_data = []
                 header_to_remove = -1
                 for line in csv_reader:
                     if str(line).__contains__('Date'):
-                        header_to_remove = line.index(name, -1)
+                        # header_to_remove = line.index(name, -1)
+                        header_to_remove = line.index(name)
                     if header_to_remove < 0:
                         print('not a legal header name')
                         exit(-1)
@@ -311,7 +316,6 @@ def add_decisions():
                     print('Problem with decisions. Check array.')
                     exit(-1)
             add_column('Decision', decisions, stocks_file + company + '\\' + day)
-            # remove_column('Decision')
             print(stocks_file + company + '\\' + day)
 
 
@@ -366,7 +370,7 @@ def get_split_dataset_individual(company_name: str):
     return features, labels
 
 
-def get_split_test_dataset_individual(company_name: str):
+def get_split_live_dataset_individual(company_name: str):
     dataset = get_test_dataset(company_name)
     features, labels = [], []
     for data in dataset:
@@ -417,11 +421,12 @@ def CNN_data_prep(company_name: str):
     return array(CNN_features), array(CNN_labels)
 
 
-def CNN_test_data_prep(company_name: str):
-    features, labels = get_split_test_dataset_individual(company_name)
+def CNN_live_data_prep(company_name: str):
+    features, labels = get_split_live_dataset_individual(company_name)
     CNN_features, CNN_labels = [], []
     feature_dataset, label_dataset = [], []
     day = 0
+    minute = 0.0
     day_index = 0
     for index in range(len(features)):
         feature = features[index]
@@ -430,19 +435,25 @@ def CNN_test_data_prep(company_name: str):
         if feature[0] == day:
             feature_dataset.append(feature[1:])
             label_dataset.append([labels[index]])
-        if len(feature_dataset) == 390:
+            minute += 1
+        else:
+            if 0 < len(feature_dataset) < 390:
+                difference = 390 - len(feature_dataset)
+                for diff in range(difference):
+                    feature_dataset.append([0] * 8)
+                    label_dataset.append([labels[index]])
+
+            minute = 0.0
+
             CNN_features.append(feature_dataset)
             CNN_labels.append(label_dataset)
-            if index == len(features) - 1:
-                break
             feature_dataset.clear()
             label_dataset.clear()
-        if feature[0] != day:
             feature_dataset.append(feature[1:])
             label_dataset.append([labels[index]])
             day = feature[0]
 
-    return CNN_features, CNN_labels
+    return array(CNN_features), array(CNN_labels)
 
 
 def change_time_format():
@@ -467,11 +478,97 @@ def change_time_format():
     change_header_name('Time', 'Minutes Since Open')
 
 
-'''
-add_percent_change(1)
-add_percent_change(5)
-add_percent_change(15)
-add_percent_change(30)
-add_percent_change(60)
-add_decisions()
-'''
+def split_by_day():
+    company_directory = listdir(stocks_file)
+    for company in company_directory:
+        if not isdir(stocks_file + company):
+            mkdir(stocks_file + company)
+        for file in listdir(stocks_file + company):
+            day_data = []
+            current_day = ""
+            data = read_csv(stocks_file + company + "\\" + file)
+            date_index = -1
+            for line in data:
+                if date_index > -1 and line != []:
+                    date = line[date_index].split(' ')[0]
+                    time = line[date_index].split(' ')[1]
+                    del line[date_index]
+                    line.insert(date_index, date)
+                    line.insert(date_index, time)
+                    file_name = date.replace('.', '_')
+                    if current_day == "":
+                        current_day = date
+                    if date != current_day:
+                        if len(day_data) == 390:
+                            if not isfile(stocks_file + company + "\\" + file_name):
+                                print(company + "\\" + file_name)
+                                write_csv(stocks_file + company + "\\" + file_name + ".csv", day_data)
+                        day_data.clear()
+                        day_data.append(line)
+                        current_day = date
+                    else:
+                        day_data.append(line)
+
+                if str(line).__contains__('Date'):
+                    date_index = line.index('Date')
+                if date_index < 0:
+                    print('check for date')
+                    exit(-1)
+
+
+def switch_columns(column1: str, column2: str):
+    company_directory = listdir(stocks_file)
+    for company in company_directory:
+        if not isdir(stocks_file + company):
+            mkdir(stocks_file + company)
+        for file in listdir(stocks_file + company):
+            day_data = []
+            column1_index, column2_index = -1, -1
+            data = read_csv(stocks_file + company + "\\" + file)
+            for line in data:
+                if str(line).__contains__('Date'):
+                    column1_index = line.index(column1)
+                    column2_index = line.index(column2)
+                if column1_index < 0:
+                    print('check for ' + column1)
+                    exit(-1)
+                if column2_index < 0:
+                    print('check for ' + column2)
+                    exit(-1)
+                print(line)
+                new_column1 = line[column2_index]
+                new_column2 = line[column1_index]
+
+                while new_column1.__contains__('.'):
+                    new_column1 = new_column1.replace('.', '')
+                    # print(new_column1)
+
+                while new_column2.__contains__('.'):
+                    new_column2 = new_column2.replace('.', '')
+                    # print(new_column2)
+
+                del line[column1_index]
+                if new_column1.__contains__('.'):
+                    break
+                line.insert(column1_index, new_column1)
+
+                del line[column2_index]
+                if new_column1.__contains__('.'):
+                    break
+                line.insert(column2_index, new_column2)
+                print(line)
+                day_data.append(line)
+            write_csv(stocks_file + company + "\\" + file, day_data)
+
+
+def get_data_points():
+    company_directory = listdir(stocks_file)
+    for company_name in company_directory:
+        points = 0
+        for file in listdir(stocks_file + company_name):
+            data = read_csv(stocks_file + company_name + "\\" + file)
+            for line in data:
+                if not str(line).__contains__('Date'):
+                    points += 1
+        print(company_name + ": " + "{:,}".format(points) + " data points")
+
